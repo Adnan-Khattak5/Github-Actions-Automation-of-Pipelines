@@ -1,0 +1,63 @@
+# .github/workflows/dependency-updates.yml
+
+name: Dependency Updates
+
+on:
+  push:
+    branches:
+      - main
+  # schedule:
+  #   - cron: '0 7 * * *'  # Runs every day at 7 AM UTC
+  # workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Setting up the job for Dependabot updates
+      - name: Setup Dependabot
+        uses: dependabot/fetch-metadata@v1.2.1
+        with:
+          github-token: ${{ secrets.SECRETFORSCDASSIGNMENT2 }}
+
+      - name: Automatic Dependency Updates
+        uses: dependabot/auto-merge-action@v1
+        with:
+          github-token: ${{ secrets.SECRETFORSCDASSIGNMENT2 }}
+          command: update
+          package-ecosystem: 'npm' # Specify your package manager, e.g., npm, maven, gradle
+          directory: '/'  # Directory where package manifests are located
+          versioning-strategy: 'increase' # Can be increase, increase-if-necessary, widen, etc.
+
+      # Running tests to verify updates
+      - name: Run Tests
+        run: npm test # Replace with your project's test command
+
+  # Configuration for Dependabot to handle pull requests
+  pull_request_handling:
+    if: github.event_name == 'pull_request'
+    needs: update-dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Specify the Node.js version
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Test after update
+        run: npm test
+
+      - name: Auto-merge pull request
+        uses: dependabot/merge-action@v1
+        with:
+          github-token: ${{ secrets.SECRETFORSCDASSIGNMENT2 }}
+          merge-method: 'squash' # Can be merge, squash or rebase
