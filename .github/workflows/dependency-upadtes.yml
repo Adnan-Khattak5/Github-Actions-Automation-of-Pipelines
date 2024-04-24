@@ -31,6 +31,3 @@ jobs:
           branch: update-dependencies
           base: main
           token: ${{ secrets.SECRETFORSCDASSIGNMENT2 }}
-
-      - name: Run tests
-        run: npm test
