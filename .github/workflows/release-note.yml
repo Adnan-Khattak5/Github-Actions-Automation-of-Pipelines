@@ -1,0 +1,37 @@
+name: Generate and Publish Release Notes
+
+on:
+  push:
+    tags:
+      - 'v*'  # This pattern matches semantic versioning tags
+
+jobs:
+  generate-and-publish-release-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Necessary to retrieve all commits for generating release notes
+
+      - name: Generate release notes
+        run: |
+          echo "Release Notes for ${GITHUB_REF_NAME}" > release-notes.md
+          echo "" >> release-notes.md
+          echo "## Changes:" >> release-notes.md
+          PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF_NAME}^)
+          git log ${PREV_TAG}..${GITHUB_REF_NAME} --pretty=format:"- %s" >> release-notes.md
+        shell: bash
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.SECRETFORSCDASSIGNMENT2 }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref_name }}
+          body_path: ./release-notes.md
+          draft: false
+          prerelease: false
+
